@@ -1,0 +1,17 @@
+<group name="sentient_shield_custom,">
+  <rule id="100001" level="12">
+    <if_sid>550</if_sid>
+    <match>/etc/passwd|/etc/shadow</match>
+    <description>CRITICAL: Unauthorized modification of system identity files detected.</description>
+    <mitre>
+      <id>T1078</id> </mitre>
+  </rule>
+
+  <rule id="100002" level="15">
+    <if_sid>60103</if_sid>
+    <match>vssadmin delete shadows</match>
+    <description>IMMEDIATE ACTION: Ransomware behavior detected (Shadow Copy Deletion).</description>
+    <mitre>
+      <id>T1490</id> </mitre>
+  </rule>
+</group>
