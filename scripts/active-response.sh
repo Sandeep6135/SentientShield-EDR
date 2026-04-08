@@ -7,10 +7,8 @@ USER=$2
 IP=$3
 
 if [ "$ACTION" == "add" ]; then
-    # Ban the source IP for 3600 seconds (1 hour)
-    iptables -I INPUT -s $IP -j DROP
+    iptables -I INPUT -s "$IP" -j DROP
     echo "$(date) - Banned IP $IP due to brute force attempt" >> /var/ossec/logs/active-responses.log
 elif [ "$ACTION" == "delete" ]; then
-    # Unban after the timeout
-    iptables -D INPUT -s $IP -j DROP
+    iptables -D INPUT -s "$IP" -j DROP
 fi

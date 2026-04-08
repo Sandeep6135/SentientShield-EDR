@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  wazuh:
+    image: wazuh/wazuh:latest
+    container_name: sentient_shield_manager
+    hostname: wazuh-manager
+    ports:
+      - "1514:1514"
+      - "1515:1515"
+      - "514:514/udp"
+      - "9200:9200"
+    environment:
+      INDEXER_URL: https://elasticsearch:9200
+      INDEXER_USERNAME: admin
+      INDEXER_PASSWORD: SecurePassword123!
+      FILEBEAT_SSL_VERIFICATION_MODE: full
+      SSL_CERTIFICATE_AUTHORITIES: /etc/ssl/certs/ca-bundle.crt
+      SSL_CERTIFICATE: /etc/ssl/certs/wazuh.cert
+      SSL_KEY: /etc/ssl/private/wazuh.key
+      WAZUH_API_TLS_ENABLED: "true"
+      WAZUH_DASHBOARD_TLS_ENABLED: "true"
+    volumes:
+      - ./wazuh-manager/ossec.conf:/wazuh-config-mount/etc/ossec.conf:ro
+      - ./wazuh-manager/local_rules.xml:/wazuh-config-mount/etc/rules/local_rules.xml:ro
+      - wazuh_api_data:/var/ossec/api/configuration
+      - wazuh_etc:/var/ossec/etc
+      - wazuh_logs:/var/ossec/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:55000/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentient_shield
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.0.0
+    container_name: sentient_shield_elasticsearch
+    environment:
+      ELASTIC_PASSWORD: SecurePassword123!
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      xpack.security.enrollment.enabled: "true"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 | grep -q 'You Know, for Search'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentient_shield
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.0.0
+    container_name: sentient_shield_kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: elastic
+      ELASTICSEARCH_PASSWORD: SecurePassword123!
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q 'state\":{\"state'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentient_shield
+
+volumes:
+  wazuh_api_data:
+  wazuh_etc:
+  wazuh_logs:
+  elasticsearch_data:
+
+networks:
+  sentient_shield:
+    driver: bridge
