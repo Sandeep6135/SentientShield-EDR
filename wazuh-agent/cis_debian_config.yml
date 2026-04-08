@@ -1,0 +1,35 @@
+# Security Configuration Assessment (SCA) - Custom CIS Policy
+# Sentient Shield EDR - Target Linux Web Server Agent Configuration
+
+policy:
+  id: "sentient_shield_cis_webserver"
+  file: "cis_debian_config.yml"
+  name: "CIS Linux Hardening Baseline (Custom Web Server)"
+  description: "Continuous compliance checks for Infotact's target Linux infrastructure."
+  references:
+    - https://www.cisecurity.org/benchmark/debian_linux/
+
+requirements:
+  title: "Check that the OS is Linux"
+  description: "Requirements for running the hardening baseline."
+  condition: any
+  rules:
+    - 'f:/etc/os-release'
+
+checks:
+  - id: 15001
+    title: "Ensure SSH root login is disabled"
+    description: "The root user should not be allowed to directly login via SSH."
+    rationale: "Disabling root logins over SSH requires admins to authenticate using their own accounts, ensuring accountability."
+    remediation: "Edit /etc/ssh/sshd_config and set PermitRootLogin to no."
+    condition: all
+    rules:
+      - 'f:/etc/ssh/sshd_config -> !r:^# && r:PermitRootLogin no'
+
+  - id: 15002
+    title: "Ensure filesystem integrity monitoring is active on web directories"
+    description: "Verify that /var/www/html permissions are locked down."
+    rationale: "Prevents unauthorized code execution or defacement of the web server."
+    condition: all
+    rules:
+      - 'd:/var/www/html -> stat: 0755'
